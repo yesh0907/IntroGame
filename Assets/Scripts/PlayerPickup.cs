@@ -7,14 +7,19 @@ public class PlayerPickup : MonoBehaviour
 {
     private int count;
     private int closestPickupIndex;
-    private GameObject[] pickups;
-    
+
     public TextMeshProUGUI scoreText;
     public TextMeshProUGUI winText;
     public TextMeshProUGUI closestPickupDistanceText;
 
+    public static LineRenderer lineRenderer;
+    public static GameObject[] pickups;
+
     private void Start()
     {
+        lineRenderer = gameObject.AddComponent<LineRenderer>();
+        toggleGameInfoVisibility();
+
         count = 0;
         pickups = getPickups();
         findClosestPickup();
@@ -26,6 +31,7 @@ public class PlayerPickup : MonoBehaviour
     private void Update()
     {
         findClosestPickup();
+        toggleGameInfoVisibility();
     }
 
     private void OnTriggerEnter(Collider other)
@@ -52,7 +58,7 @@ public class PlayerPickup : MonoBehaviour
 
     private void findClosestPickup()
     {
-        if (pickups.Length > 0)
+        if (pickups.Length > 0 && Game.GameModeController.gameMode == Game.GameMode.DISTANCE)
         {
             float minDistance = float.MaxValue;
             for (int i = 0; i < pickups.Length; i++)
@@ -66,14 +72,25 @@ public class PlayerPickup : MonoBehaviour
                 }
                 pickup.GetComponent<Renderer>().material.color = Color.white;
             }
-
             pickups[closestPickupIndex].GetComponent<Renderer>().material.color = Color.blue;
             closestPickupDistanceText.text = "Distance: " + minDistance.ToString("0.00");
+
+            // render line to closest pick up
+            lineRenderer.SetPosition(0, transform.position);
+            lineRenderer.SetPosition(1, pickups[closestPickupIndex].transform.position);
+            lineRenderer.startWidth = 0.1f;
+            lineRenderer.endWidth = 0.1f;
         }
     }
 
     private GameObject[] getPickups()
     {
         return GameObject.FindGameObjectsWithTag("PickUp");
+    }
+
+    private void toggleGameInfoVisibility()
+    {
+        lineRenderer.enabled = Game.GameModeController.gameMode != Game.GameMode.NORMAL;
+        closestPickupDistanceText.enabled = Game.GameModeController.gameMode == Game.GameMode.DISTANCE;
     }
 }
